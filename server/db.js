@@ -331,12 +331,20 @@ const connectDB = async () => {
     await mongoose.connect(MONGODB_URI, {
       serverSelectionTimeoutMS: 3000,
     });
+
     isMongoConnected = true;
+
     console.log(`MongoDB Connected successfully to ${MONGODB_URI}`);
-    await seedInitialData();
+
+    // Automatic seeding disabled for production.
+    // await seedInitialData();
+
   } catch (error) {
     isMongoConnected = false;
-    console.log(`MongoDB connection offline (${error.message}). Operating using in-memory store fallback.`);
+
+    console.log(
+      `MongoDB connection offline (${error.message}). Operating using in-memory store fallback.`
+    );
   }
 };
 
