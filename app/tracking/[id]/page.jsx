@@ -16,11 +16,14 @@ import {
   Circle,
   Send,
   X,
+  RotateCcw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/header';
 import { MapView } from '@/components/map-view';
 import { helpers } from '@/lib/mock-data';
+import ChatModal from '@/components/chat-modal';
+import QuickBookingModal from '@/components/quick-booking-modal';
 
 const trackingSteps = [
   { id: 1, label: 'Booking Confirmed', time: '10:00 AM', completed: true },
@@ -29,43 +32,28 @@ const trackingSteps = [
   { id: 4, label: 'Job completed', time: '-', completed: false },
 ];
 
-const mockMessages = [
-  { id: 1, sender: 'helper', text: "Hi! I'm on my way to your location.", time: '10:15 AM' },
-  { id: 2, sender: 'user', text: "Great! I'll be waiting at the front door.", time: '10:16 AM' },
-  { id: 3, sender: 'helper', text: 'Perfect. I should arrive in about 10 minutes.', time: '10:17 AM' },
-];
-
 export default function TrackingPage({ params }) {
   const { id } = React.use(params);
   const helper = helpers.find((h) => h.id === id) || helpers[0];
 
-  const [showChat, setShowChat] = useState(false);
-  const [messages, setMessages] = useState(mockMessages);
-  const [newMessage, setNewMessage] = useState('');
-  const [eta, setEta] = useState(10);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [showRehireModal, setShowRehireModal] = useState(false);
+  const [eta, setEta] = useState(8);
+  const [helperPos, setHelperPos] = useState({ lat: 28.6149, lng: 77.208 });
 
-  // Simulate ETA countdown
+  // Simulate real-time GPS coordinate movement towards destination
   useEffect(() => {
     const interval = setInterval(() => {
+      setHelperPos((prev) => ({
+        lat: prev.lat + (28.6139 - prev.lat) * 0.1,
+        lng: prev.lng + (77.209 - prev.lng) * 0.1,
+      }));
       setEta((prev) => (prev > 1 ? prev - 1 : 1));
-    }, 60000);
+    }, 4000);
     return () => clearInterval(interval);
   }, []);
 
-  const sendMessage = () => {
-    if (newMessage.trim()) {
-      setMessages([
-        ...messages,
-        {
-          id: messages.length + 1,
-          sender: 'user',
-          text: newMessage,
-          time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-        },
-      ]);
-      setNewMessage('');
-    }
-  };
+
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -76,9 +64,9 @@ export default function TrackingPage({ params }) {
           {/* Map Section */}
           <div className="flex-1 relative" style={{ isolation: 'isolate' }}>
             <MapView
-              helpers={[{ ...helper, location: { lat: 40.7148, lng: -74.008 } }]}
-              center={[40.7128, -74.006]}
-              zoom={14}
+              helpers={[{ ...helper, location: helperPos }]}
+              center={[helperPos.lat, helperPos.lng]}
+              zoom={15}
             />
 
             {/* Back Button Overlay */}
@@ -133,12 +121,12 @@ export default function TrackingPage({ params }) {
                   <Button
                     variant="outline"
                     className="gap-2"
-                    onClick={() => setShowChat(true)}
+                    onClick={() => setShowChatModal(true)}
                   >
                     <MessageCircle className="w-4 h-4" />
                     Message
                   </Button>
-                  <Button variant="outline" className="gap-2">
+                  <Button variant="outline" className="gap-2" onClick={() => window.open(`tel:+919876543210`)}>
                     <Phone className="w-4 h-4" />
                     Call
                   </Button>
@@ -215,108 +203,44 @@ export default function TrackingPage({ params }) {
               </div>
             </div>
 
-            {/* Need Help */}
-            <div className="mt-6 p-4 bg-secondary/50 rounded-xl">
-              <p className="text-sm text-muted-foreground">
-                Need help with your booking?
-              </p>
-              <Button variant="link" className="p-0 h-auto text-primary">
-                Contact Support
+            {/* Need Help & Hire Again for Tomorrow */}
+            <div className="mt-6 space-y-3">
+              <Button
+                onClick={() => setShowRehireModal(true)}
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-xs gap-2 shadow-sm"
+              >
+                <RotateCcw className="w-4 h-4" /> Hire {helper.name.split(' ')[0]} Again for Tomorrow
               </Button>
+
+              <div className="p-4 bg-secondary/50 rounded-xl">
+                <p className="text-sm text-muted-foreground">
+                  Need help with your booking?
+                </p>
+                <Button variant="link" className="p-0 h-auto text-primary text-xs">
+                  Contact Support
+                </Button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Chat Modal */}
-        {showChat && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="fixed inset-0 bg-foreground/50 flex items-end justify-center lg:items-center p-4"
-            style={{ zIndex: 9999 }}
-          >
-            <motion.div
-              initial={{ y: 100, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              className="bg-card w-full max-w-md rounded-t-2xl lg:rounded-2xl border border-border shadow-2xl overflow-hidden"
-            >
-              {/* Chat Header */}
-              <div className="flex items-center justify-between p-4 border-b border-border">
-                <div className="flex items-center gap-3">
-                  <div className="relative w-10 h-10 rounded-full overflow-hidden">
-                    <Image
-                      src={helper.image}
-                      alt={helper.name}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-card-foreground">{helper.name}</p>
-                    <p className="text-xs text-green-500">Online</p>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowChat(false)}
-                  aria-label="Close chat"
-                >
-                  <X className="w-5 h-5" />
-                </Button>
-              </div>
+        {/* Real-Time Chat Modal */}
+        <ChatModal
+          isOpen={showChatModal}
+          onClose={() => setShowChatModal(false)}
+          bookingId={`b_${id}`}
+          recipientName={helper.name}
+          recipientRole="helper"
+          currentUserId="cust_1"
+          currentUserName="Customer"
+        />
 
-              {/* Chat Messages */}
-              <div className="h-80 overflow-y-auto p-4 space-y-4">
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div
-                      className={`max-w-[80%] rounded-2xl px-4 py-2 ${
-                        msg.sender === 'user'
-                          ? 'bg-primary text-primary-foreground rounded-br-none'
-                          : 'bg-secondary text-secondary-foreground rounded-bl-none'
-                      }`}
-                    >
-                      <p className="text-sm">{msg.text}</p>
-                      <p
-                        className={`text-xs mt-1 ${
-                          msg.sender === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground'
-                        }`}
-                      >
-                        {msg.time}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Chat Input */}
-              <div className="p-4 border-t border-border">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                    placeholder="Type a message..."
-                    className="flex-1 px-4 py-3 rounded-full border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  />
-                  <Button
-                    onClick={sendMessage}
-                    size="icon"
-                    className="rounded-full bg-primary text-primary-foreground"
-                    aria-label="Send message"
-                  >
-                    <Send className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
+        {/* Re-hire Quick Booking Modal */}
+        <QuickBookingModal
+          isOpen={showRehireModal}
+          onClose={() => setShowRehireModal(false)}
+          helper={helper}
+        />
       </main>
     </div>
   );

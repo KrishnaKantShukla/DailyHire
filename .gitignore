@@ -30,3 +30,4 @@ pnpm-debug.log*
 .DS_Store
 *.pem
 Thumbs.db
+tmp_*.json

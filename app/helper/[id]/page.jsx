@@ -16,18 +16,34 @@ import {
   Phone,
   Share2,
   Heart,
+  RotateCcw,
+  UserCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { services, reviews } from '@/lib/mock-data';
-import { fetchHelper } from '@/lib/api';
+import { getUser } from '@/lib/auth';
+import { fetchHelper, fetchBookings } from '@/lib/api';
+import QuickBookingModal from '@/components/quick-booking-modal';
 
 export default function HelperProfilePage({ params }) {
   const { id } = React.use(params);
   const [helper, setHelper] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [hasPreviouslyHired, setHasPreviouslyHired] = useState(false);
+  const [isQuickHireOpen, setIsQuickHireOpen] = useState(false);
+
+  const currentUser = getUser();
+  const currentUserId = currentUser?.id || currentUser?._id;
+  const isSelf = Boolean(
+    currentUser && helper && (
+      (currentUserId && (currentUserId === helper._id || currentUserId === helper.id || currentUserId === helper.userId || currentUserId === helper.customId)) ||
+      (helper.customId && helper.customId === `h_${currentUserId}`) ||
+      (currentUser.email && helper.email && currentUser.email.toLowerCase() === helper.email.toLowerCase())
+    )
+  );
 
   useEffect(() => {
     const loadHelper = async () => {
@@ -36,6 +52,19 @@ export default function HelperProfilePage({ params }) {
       try {
         const data = await fetchHelper(id);
         setHelper(data);
+
+        // Check if current logged-in customer previously hired this helper
+        if (currentUserId) {
+          try {
+            const userBookings = await fetchBookings({ customerId: currentUserId });
+            const matched = (userBookings || []).some(
+              (b) => b.helperId === id || b.helperId === data?.customId || b.helperId === data?._id
+            );
+            setHasPreviouslyHired(matched);
+          } catch (err) {
+            console.error('Failed to check booking history:', err);
+          }
+        }
       } catch (error) {
         console.error(error);
         setLoadError(error.message || 'Unable to load helper details.');
@@ -47,7 +76,7 @@ export default function HelperProfilePage({ params }) {
     if (id) {
       loadHelper();
     }
-  }, [id]);
+  }, [id, currentUserId]);
 
   if (isLoading) {
     return (
@@ -282,20 +311,43 @@ export default function HelperProfilePage({ params }) {
                   {helper.available ? 'Available Now' : 'Currently Busy'}
                 </div>
 
-                <Link href={`/booking/${helper._id}`}>
-                  <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90 mb-3" size="lg">
-                    Book Now
-                  </Button>
-                </Link>
+                {hasPreviouslyHired && !isSelf && (
+                  <div className="mb-4 p-3 rounded-xl bg-primary/10 border border-primary/20 text-center">
+                    <span className="text-xs font-bold text-primary flex items-center justify-center gap-1.5">
+                      <UserCheck className="w-4 h-4" /> Previously Hired by You
+                    </span>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      You booked {helper.name} before. Click below to re-hire for another day.
+                    </p>
+                  </div>
+                )}
 
-                <div className="grid grid-cols-2 gap-3">
-                  <Button variant="outline" className="gap-2">
-                    <MessageCircle className="w-4 h-4" />
-                    Message
+                {isSelf ? (
+                  <Button disabled className="w-full bg-muted text-muted-foreground cursor-not-allowed mb-3" size="lg">
+                    Your Worker Profile (Self-Booking N/A)
                   </Button>
-                  <Button variant="outline" className="gap-2">
-                    <Phone className="w-4 h-4" />
-                    Call
+                ) : hasPreviouslyHired ? (
+                  <Button
+                    onClick={() => setIsQuickHireOpen(true)}
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-sm gap-2 mb-3 shadow-md"
+                    size="lg"
+                  >
+                    <RotateCcw className="w-4 h-4" /> Hire Again
+                  </Button>
+                ) : (
+                  <Link href={`/booking/${helper._id}`}>
+                    <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-sm mb-3 shadow-sm" size="lg">
+                      Hire {helper.name.split(' ')[0]}
+                    </Button>
+                  </Link>
+                )}
+
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1 gap-2" size="sm">
+                    <MessageCircle className="w-4 h-4" /> Chat
+                  </Button>
+                  <Button variant="outline" className="flex-1 gap-2" size="sm">
+                    <Phone className="w-4 h-4" /> Call
                   </Button>
                 </div>
 

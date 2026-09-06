@@ -1,52 +1,45 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getUser } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-context';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { HelperDashboard } from '@/components/helper-dashboard';
 import { CustomerDashboard } from '@/components/customer-dashboard';
+import { HelperCardSkeleton } from '@/components/ui/skeleton-loader';
 
 export default function DashboardPage() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, isHelper, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    const currentUser = getUser();
-    if (!currentUser) {
+    if (!isLoading && !isAuthenticated) {
       router.push('/login');
-    } else {
-      setUser(currentUser);
-      setLoading(false);
     }
-  }, [router]);
+  }, [isLoading, isAuthenticated, router]);
 
-  if (loading) {
+  if (isLoading || (!user && isAuthenticated)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-          <p className="mt-4 text-muted-foreground">Loading dashboard...</p>
-        </div>
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header />
+        <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full space-y-6">
+          <HelperCardSkeleton />
+          <HelperCardSkeleton />
+        </main>
+        <Footer />
       </div>
     );
   }
 
-  const isHelper = user?.role === 'helper' || user?.accountType === 'helper';
-
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <main className="flex-1">
-        {isHelper ? (
-          <HelperDashboard user={user} />
-        ) : (
-          <CustomerDashboard user={user} />
-        )}
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        {isHelper ? <HelperDashboard /> : <CustomerDashboard />}
       </main>
       <Footer />
     </div>
   );
 }
+

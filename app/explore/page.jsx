@@ -11,6 +11,8 @@ import { MapView } from '@/components/map-view';
 import { categories } from '@/lib/mock-data';
 import { fetchHelpers } from '@/lib/api';
 
+import { HelperCardSkeleton } from '@/components/ui/skeleton-loader';
+
 const priceRanges = [
   { id: 'all', label: 'All Prices' },
   { id: 'low', label: 'Under ₹400/hr' },
@@ -27,6 +29,7 @@ const ratings = [
 
 export default function ExplorePage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedPrice, setSelectedPrice] = useState('all');
   const [selectedRating, setSelectedRating] = useState('all');
@@ -35,6 +38,14 @@ export default function ExplorePage() {
   const [helpers, setHelpers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     const loadHelpers = async () => {
@@ -55,8 +66,11 @@ export default function ExplorePage() {
   }, []);
 
   const filteredHelpers = helpers.filter((helper) => {
-    if (searchQuery && !helper.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !helper.profession.toLowerCase().includes(searchQuery.toLowerCase())) {
+    if (
+      debouncedQuery &&
+      !helper.name.toLowerCase().includes(debouncedQuery.toLowerCase()) &&
+      !helper.profession.toLowerCase().includes(debouncedQuery.toLowerCase())
+    ) {
       return false;
     }
     if (selectedCategory && helper.profession.toLowerCase().replace(/\s+/g, '-') !== selectedCategory) {
@@ -78,6 +92,7 @@ export default function ExplorePage() {
     setSelectedPrice('all');
     setSelectedRating('all');
     setSearchQuery('');
+    setDebouncedQuery('');
   };
 
   const hasActiveFilters = selectedCategory || selectedPrice !== 'all' || selectedRating !== 'all' || searchQuery;
@@ -206,9 +221,13 @@ export default function ExplorePage() {
         {/* Results */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {isLoading ? (
-            <div className="text-center py-24">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-              <p className="mt-4 text-muted-foreground">Loading helpers...</p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 py-6">
+              <HelperCardSkeleton />
+              <HelperCardSkeleton />
+              <HelperCardSkeleton />
+              <HelperCardSkeleton />
+              <HelperCardSkeleton />
+              <HelperCardSkeleton />
             </div>
           ) : loadError ? (
             <div className="text-center py-24">
@@ -216,6 +235,7 @@ export default function ExplorePage() {
               <p className="text-muted-foreground mt-2">{loadError}</p>
             </div>
           ) : (
+
             <>
               {/* Results count */}
               <div className="flex items-center justify-between mb-6">

@@ -80,6 +80,17 @@ export default function BookingPage({ params }) {
     }
   };
 
+  const currentUser = getUser();
+  const currentUserId = currentUser?.id || currentUser?._id;
+
+  const isSelfBooking = Boolean(
+    currentUser && helper && (
+      (currentUserId && (currentUserId === helper._id || currentUserId === helper.id || currentUserId === helper.userId || currentUserId === helper.customId)) ||
+      (helper.customId && (helper.customId === `h_${currentUserId}`)) ||
+      (currentUser.email && helper.email && currentUser.email.toLowerCase() === helper.email.toLowerCase())
+    )
+  );
+
   const confirmBooking = async () => {
     if (!service || !selectedDate || !selectedTime || !helper) {
       setError('Please select a service, date, and time.');
@@ -87,8 +98,14 @@ export default function BookingPage({ params }) {
     }
 
     const user = getUser();
-    if (!user || !user._id) {
+    const userId = user?.id || user?._id;
+    if (!user || !userId) {
       window.location.href = '/login';
+      return;
+    }
+
+    if (isSelfBooking) {
+      setError('You cannot hire or book your own worker profile.');
       return;
     }
 
@@ -97,12 +114,15 @@ export default function BookingPage({ params }) {
 
     try {
       await createBooking({
-        customerId: user._id,
-        helperId: helper._id,
-        serviceId: service._id,
+        customerId: userId,
+        customerName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username || 'Customer',
+        helperId: helper.customId || helper._id || helper.id,
+        helperName: helper.name,
+        helperImage: helper.image,
+        serviceName: service.name,
+        price: service.basePrice,
         date: selectedDate,
         time: selectedTime,
-        totalPrice: service.basePrice,
       });
       setCurrentStep(3);
     } catch (bookingError) {
@@ -171,8 +191,28 @@ export default function BookingPage({ params }) {
                 Back to profile
               </Link>
 
-              {/* Progress Steps */}
-              <div className="mb-8">
+              {isSelfBooking ? (
+                <div className="bg-card border border-amber-300 dark:border-amber-800 rounded-2xl p-8 text-center max-w-lg mx-auto my-12 shadow-lg">
+                  <div className="w-16 h-16 bg-amber-100 dark:bg-amber-950/50 rounded-full flex items-center justify-center mx-auto mb-4 text-amber-600">
+                    <Shield className="w-8 h-8" />
+                  </div>
+                  <h2 className="text-xl font-bold text-foreground mb-2">Self-Booking Not Allowed</h2>
+                  <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+                    You are currently logged in as this worker profile ({helper.name}). Workers cannot hire or book their own services to maintain platform trust, security, and accuracy.
+                  </p>
+                  <div className="flex gap-3 justify-center">
+                    <Link href="/dashboard">
+                      <Button className="bg-primary text-primary-foreground">Go to Dashboard</Button>
+                    </Link>
+                    <Link href="/explore">
+                      <Button variant="outline">Browse Other Helpers</Button>
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Progress Steps */}
+                  <div className="mb-8">
                 <div className="flex items-center justify-between">
                   {steps.map((step, index) => (
                     <div key={step} className="flex items-center flex-1">
@@ -546,8 +586,10 @@ export default function BookingPage({ params }) {
               </div>
             </>
           )}
-        </div>
-      </main>
+        </>
+      )}
+    </div>
+  </main>
     </div>
   );
 }
