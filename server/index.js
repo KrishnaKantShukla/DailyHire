@@ -37,9 +37,14 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', server: 'DailyHire Express & MongoDB Backend', time: new Date() });
 });
 
-// Start Server
-app.listen(PORT, () => {
-  console.log(`================================================`);
-  console.log(` DailyHire Backend running on http://localhost:${PORT}`);
-  console.log(`================================================`);
-});
+// Start Server if run directly
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`================================================`);
+    console.log(` DailyHire Backend running on http://localhost:${PORT}`);
+    console.log(`================================================`);
+  });
+}
+
+module.exports = app;
+
