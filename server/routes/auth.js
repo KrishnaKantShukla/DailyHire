@@ -173,7 +173,7 @@ router.post('/signup', async (req, res) => {
         accountNumber: accountNumber || '',
         ifscCode: ifscCode || '',
         upiId: upiId || '',
-        verificationStatus: selectedRole === 'helper' && (govIdNumber || accountNumber) ? 'verified' : 'pending',
+        verificationStatus: selectedRole === 'helper' ? 'pending' : 'verified',
       });
 
       if (selectedRole === 'helper') {
@@ -184,10 +184,10 @@ router.post('/signup', async (req, res) => {
           name: `${firstName} ${lastName || ''}`.trim(),
           profession: profession || 'General Helper',
           image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
-          hourlyRate: hourlyRate ? Number(hourlyRate) : 400,
-          priceRange: `₹${hourlyRate || 400}/hr`,
+          hourlyRate: hourlyRate ? Number(hourlyRate) : 85,
+          priceRange: `₹${hourlyRate || 85}/hr`,
           skills: Array.isArray(skills) && skills.length > 0 ? skills : [profession || 'General'],
-          bio: bio || `Verified professional ${profession || 'helper'} available for daily hire.`,
+          bio: bio || `Professional ${profession || 'helper'} awaiting verification.`,
           phone: phone || '',
           govIdType: govIdType || '',
           govIdNumber: govIdNumber || '',
@@ -197,8 +197,22 @@ router.post('/signup', async (req, res) => {
           accountNumber: accountNumber || '',
           ifscCode: ifscCode || '',
           upiId: upiId || '',
-          verificationStatus: govIdNumber || accountNumber ? 'verified' : 'pending',
+          verified: false,
+          verificationStatus: 'pending',
         });
+        const Notification = require('../db').Notification;
+        if (Notification) {
+          await Notification.create({
+            userId: newUser._id.toString(),
+            title: selectedRole === 'helper' ? `Welcome to Worker Portal, ${firstName}! 🚀` : `Welcome to DailyHire, ${firstName}! 🌟`,
+            message: selectedRole === 'helper'
+              ? 'Your worker profile has been registered and is under verification review.'
+              : 'Your account is active! You can now explore verified daily-wage helpers and book services.',
+            type: 'system',
+            read: false,
+            link: '/dashboard',
+          }).catch(() => {});
+        }
       }
 
       const token = jwt.sign({ userId: newUser._id, email: newUser.email }, JWT_SECRET, { expiresIn: '7d' });
@@ -254,7 +268,7 @@ router.post('/signup', async (req, res) => {
       accountNumber: accountNumber || '',
       ifscCode: ifscCode || '',
       upiId: upiId || '',
-      verificationStatus: selectedRole === 'helper' && (govIdNumber || accountNumber) ? 'verified' : 'pending',
+      verificationStatus: selectedRole === 'helper' ? 'pending' : 'verified',
     };
 
     memoryStore.users.push(memUser);
@@ -267,14 +281,15 @@ router.post('/signup', async (req, res) => {
         name: `${firstName} ${lastName || ''}`.trim(),
         profession: profession || 'General Helper',
         image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
-        hourlyRate: hourlyRate ? Number(hourlyRate) : 400,
-        priceRange: `₹${hourlyRate || 400}/hr`,
+        hourlyRate: hourlyRate ? Number(hourlyRate) : 85,
+        priceRange: `₹${hourlyRate || 85}/hr`,
         rating: 5.0,
-        reviewCount: 1,
+        reviewCount: 0,
         available: true,
-        verified: true,
+        verified: false,
+        verificationStatus: 'pending',
         skills: Array.isArray(skills) && skills.length > 0 ? skills : [profession || 'General'],
-        bio: bio || `Verified professional ${profession || 'helper'} available for daily hire.`,
+        bio: bio || `Professional ${profession || 'helper'} awaiting admin verification.`,
         phone: phone || '',
         govIdType: govIdType || '',
         govIdNumber: govIdNumber || '',
@@ -284,9 +299,9 @@ router.post('/signup', async (req, res) => {
         accountNumber: accountNumber || '',
         ifscCode: ifscCode || '',
         upiId: upiId || '',
-        verificationStatus: govIdNumber || accountNumber ? 'verified' : 'pending',
       });
     }
+
 
     const token = jwt.sign({ userId, email }, JWT_SECRET, { expiresIn: '7d' });
 
@@ -322,7 +337,28 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Email and password are required.' });
     }
 
+    // Direct Administrator Credentials Check
+    const cleanEmail = email.toLowerCase().trim();
+    if ((cleanEmail === 'admin@dailyhire.com' || cleanEmail === 'admin') && (password === 'admin' || password === 'admin123')) {
+      const adminToken = jwt.sign({ userId: 'admin_1', email: 'admin@dailyhire.com', role: 'admin' }, JWT_SECRET, { expiresIn: '7d' });
+      return res.json({
+        message: 'Administrator login successful',
+        token: adminToken,
+        user: {
+          id: 'admin_1',
+          firstName: 'DailyHire',
+          lastName: 'Admin',
+          username: 'admin',
+          email: 'admin@dailyhire.com',
+          accountType: 'admin',
+          role: 'admin',
+          isAdmin: true,
+        },
+      });
+    }
+
     if (isConnected()) {
+
       const user = await User.findOne({ email });
       if (!user) {
         return res.status(401).json({ message: 'Invalid credentials.' });
@@ -335,6 +371,23 @@ router.post('/login', async (req, res) => {
 
       const token = jwt.sign({ userId: user._id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
 
+      let helperStatus = user.verificationStatus || 'verified';
+      let isVerified = user.verificationStatus === 'verified';
+
+      if (user.accountType === 'helper') {
+        const helperObj = await Helper.findOne({
+          $or: [
+            { userId: user._id.toString() },
+            { customId: `h_${user._id}` },
+            { customId: user._id.toString() },
+          ],
+        });
+        if (helperObj) {
+          helperStatus = helperObj.verificationStatus || (helperObj.verified ? 'verified' : 'pending');
+          isVerified = helperObj.verified || helperStatus === 'verified';
+        }
+      }
+
       return res.json({
         message: 'Login successful',
         token,
@@ -346,6 +399,8 @@ router.post('/login', async (req, res) => {
           email: user.email,
           accountType: user.accountType,
           role: user.accountType,
+          verificationStatus: helperStatus,
+          verified: isVerified,
         },
       });
     }
@@ -363,6 +418,19 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign({ userId: memUser.id, email: memUser.email }, JWT_SECRET, { expiresIn: '7d' });
 
+    let memHelperStatus = memUser.verificationStatus || 'verified';
+    let memIsVerified = memUser.verificationStatus === 'verified';
+
+    if (memUser.accountType === 'helper') {
+      const helperObj = memoryStore.helpers.find(
+        (h) => h.userId === memUser.id || h.customId === `h_${memUser.id}` || h.id === memUser.id
+      );
+      if (helperObj) {
+        memHelperStatus = helperObj.verificationStatus || (helperObj.verified ? 'verified' : 'pending');
+        memIsVerified = helperObj.verified || memHelperStatus === 'verified';
+      }
+    }
+
     res.json({
       message: 'Login successful',
       token,
@@ -374,6 +442,8 @@ router.post('/login', async (req, res) => {
         email: memUser.email,
         accountType: memUser.accountType,
         role: memUser.accountType,
+        verificationStatus: memHelperStatus,
+        verified: memIsVerified,
       },
     });
   } catch (error) {

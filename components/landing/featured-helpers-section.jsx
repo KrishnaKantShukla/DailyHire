@@ -1,11 +1,24 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { helpers } from '@/lib/mock-data';
+import { fetchHelpers } from '@/lib/api';
 import { HelperCard } from '@/components/helper-card';
 
 export function FeaturedHelpersSection() {
-  const featuredHelpers = helpers.slice(0, 4);
+  const [helpersList, setHelpersList] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchHelpers()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setHelpersList(data.slice(0, 4));
+        }
+      })
+      .catch((err) => console.error('Failed to load featured helpers:', err))
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <section className="py-20 bg-background">
@@ -32,11 +45,19 @@ export function FeaturedHelpersSection() {
           </a>
         </motion.div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredHelpers.map((helper, index) => (
-            <HelperCard key={helper.id} helper={helper} index={index} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((n) => (
+              <div key={n} className="h-64 rounded-2xl bg-muted/40 animate-pulse border border-border" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {helpersList.map((helper, index) => (
+              <HelperCard key={helper.customId || helper._id || helper.id} helper={helper} index={index} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

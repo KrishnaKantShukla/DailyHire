@@ -79,14 +79,15 @@ router.post('/', async (req, res) => {
       }
 
       if (isConnected()) {
-        const targetHelper = await Helper.findOne({
-          $or: [
-            { customId: helperId },
-            { customId: `h_${customerId}` },
-            { userId: customerId },
-            { _id: helperId.match(/^[0-9a-fA-F]{24}$/) ? helperId : null },
-          ],
-        });
+        const checkOrConditions = [
+          { customId: helperId },
+          { customId: `h_${customerId}` },
+          { userId: customerId },
+        ];
+        if (typeof helperId === 'string' && helperId.match(/^[0-9a-fA-F]{24}$/)) {
+          checkOrConditions.push({ _id: helperId });
+        }
+        const targetHelper = await Helper.findOne({ $or: checkOrConditions });
         if (targetHelper && (targetHelper.userId === customerId || targetHelper.customId === `h_${customerId}`)) {
           return res.status(400).json({ message: 'Self-booking error: You cannot hire or book your own worker profile.' });
         }
@@ -98,9 +99,11 @@ router.post('/', async (req, res) => {
 
     if (isConnected()) {
       if (!imageToSave || !helperName) {
-        const helperObj = await Helper.findOne({
-          $or: [{ customId: helperId }, { _id: helperId.match(/^[0-9a-fA-F]{24}$/) ? helperId : null }],
-        });
+        const helperOrConditions = [{ customId: helperId }];
+        if (typeof helperId === 'string' && helperId.match(/^[0-9a-fA-F]{24}$/)) {
+          helperOrConditions.push({ _id: helperId });
+        }
+        const helperObj = await Helper.findOne({ $or: helperOrConditions });
         if (helperObj) {
           imageToSave = imageToSave || helperObj.image;
           nameToSave = helperName || helperObj.name;

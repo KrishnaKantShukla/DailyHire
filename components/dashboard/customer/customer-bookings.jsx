@@ -42,13 +42,16 @@ export function CustomerBookings({ bookings, onStatusUpdate, onOpenChat }) {
         <div key={booking._id || booking.id} className="bg-card rounded-2xl border border-border p-5 shadow-sm hover:border-primary/40 transition-colors">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-4">
-              <div className="relative w-14 h-14 rounded-full overflow-hidden flex-shrink-0 bg-secondary border border-border">
-                <Image
-                  src={booking.helperImage || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face'}
-                  alt={booking.helperName}
-                  fill
-                  className="object-cover"
-                />
+              <div className="w-14 h-14 rounded-full bg-slate-900 dark:bg-slate-950 text-white font-extrabold text-xl flex items-center justify-center border-2 border-slate-700 shrink-0 shadow-xs">
+                {booking.helperImage && !booking.helperImage.includes('unsplash') ? (
+                  <img
+                    src={booking.helperImage}
+                    alt={booking.helperName}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <span>{booking.helperName ? booking.helperName.trim()[0].toUpperCase() : 'H'}</span>
+                )}
               </div>
 
               <div>
@@ -97,13 +100,15 @@ export function CustomerBookings({ bookings, onStatusUpdate, onOpenChat }) {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="text-destructive hover:bg-destructive/10 text-xs"
+                  className="text-destructive hover:bg-destructive/10 text-xs font-semibold"
                   onClick={() => {
-                    onStatusUpdate(booking._id || booking.id, 'cancelled');
-                    toast.info('Booking cancelled.');
+                    if (confirm('Are you sure you want to cancel this booking request?')) {
+                      onStatusUpdate(booking._id || booking.id, 'cancelled');
+                      toast.info('Booking cancelled and removed from your dashboard.');
+                    }
                   }}
                 >
-                  Cancel
+                  Cancel Order
                 </Button>
               )}
             </div>

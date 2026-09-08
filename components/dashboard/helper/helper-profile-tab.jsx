@@ -9,7 +9,7 @@ export function HelperProfileTab({ user, onUpdateProfile }) {
   const [formData, setFormData] = useState({
     phone: user?.phone || '',
     profession: user?.profession || '',
-    hourlyRate: user?.hourlyRate || 450,
+    hourlyRate: user?.hourlyRate || 80,
     bio: user?.bio || '',
     govIdType: user?.govIdType || 'Aadhaar Card',
     govIdNumber: user?.govIdNumber || '',

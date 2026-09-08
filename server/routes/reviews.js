@@ -55,8 +55,13 @@ router.post('/', async (req, res) => {
       const allReviews = await Review.find({ helperId });
       const avgRating = allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length;
 
+      const helperOrConditions = [{ customId: helperId }];
+      if (typeof helperId === 'string' && helperId.match(/^[0-9a-fA-F]{24}$/)) {
+        helperOrConditions.push({ _id: helperId });
+      }
+
       await Helper.updateOne(
-        { $or: [{ customId: helperId }, { _id: helperId.match(/^[0-9a-fA-F]{24}$/) ? helperId : null }] },
+        { $or: helperOrConditions },
         { rating: parseFloat(avgRating.toFixed(1)), reviewCount: allReviews.length }
       );
 

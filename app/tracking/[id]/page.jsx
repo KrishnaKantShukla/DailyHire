@@ -21,7 +21,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/header';
 import { MapView } from '@/components/map-view';
-import { helpers } from '@/lib/mock-data';
+import { fetchHelper } from '@/lib/api';
 import ChatModal from '@/components/chat-modal';
 import QuickBookingModal from '@/components/quick-booking-modal';
 
@@ -34,12 +34,27 @@ const trackingSteps = [
 
 export default function TrackingPage({ params }) {
   const { id } = React.use(params);
-  const helper = helpers.find((h) => h.id === id) || helpers[0];
-
+  const [helper, setHelper] = useState(null);
   const [showChatModal, setShowChatModal] = useState(false);
   const [showRehireModal, setShowRehireModal] = useState(false);
   const [eta, setEta] = useState(8);
   const [helperPos, setHelperPos] = useState({ lat: 28.6149, lng: 77.208 });
+
+  useEffect(() => {
+    fetchHelper(id)
+      .then((data) => setHelper(data))
+      .catch(() => {
+        // Fallback default helper structure if id not found
+        setHelper({
+          id: id || '1',
+          name: 'Rahul Sharma',
+          profession: 'Plumber',
+          hourlyRate: 85,
+          phone: '+91 98765 43210',
+          image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200',
+        });
+      });
+  }, [id]);
 
   // Simulate real-time GPS coordinate movement towards destination
   useEffect(() => {
@@ -54,6 +69,17 @@ export default function TrackingPage({ params }) {
   }, []);
 
 
+
+  if (!helper) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header />
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

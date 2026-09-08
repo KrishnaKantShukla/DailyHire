@@ -16,56 +16,21 @@ export default function NotificationCenter() {
 
   const getFallbackNotifications = useCallback(() => {
     if (!user) {
-      return [
-        {
-          _id: 'n_guest_1',
-          title: 'Welcome to DailyHire! ✨',
-          message: 'Join 50,000+ happy members! Discover top local daily-wage helpers & specialists, and get up to 10% OFF on your first hiring.',
-          type: 'system',
-          read: false,
-          link: '/signup',
-          createdAt: new Date(),
-        },
-        {
-          _id: 'n_guest_2',
-          title: 'Empowering Skilled Local Professionals 🛡️',
-          message: 'Connecting 100% ID-verified daily workers and skilled specialists directly with valued employers across your area.',
-          type: 'booking',
-          read: false,
-          link: '/explore',
-          createdAt: new Date(Date.now() - 3600000),
-        },
-      ];
+      return [];
     }
+
+    const userName = user?.firstName ? `${user.firstName}${user.lastName ? ' ' + user.lastName : ''}`.trim() : (user?.name || 'Valued Member');
 
     if (isHelper) {
       return [
         {
           _id: `n_w1_${currentUserId}`,
-          title: `Welcome to DailyHire Worker Portal, ${name}! 🚀`,
-          message: 'Welcome aboard! Showcase your skills with pride, deliver outstanding service, and build a stellar reputation to attract top employers.',
+          title: `Welcome to DailyHire Worker Portal, ${userName}! 🚀`,
+          message: 'Your worker account is active. Manage job requests, update your verification details, and track your daily earnings.',
           type: 'system',
           read: false,
           link: '/dashboard',
           createdAt: new Date(),
-        },
-        {
-          _id: `n_w2_${currentUserId}`,
-          title: 'Earn Money & Instant Payouts 💰',
-          message: 'Turn your hard work into daily earnings. Complete jobs seamlessly and receive instant 60-second direct bank & UPI deposits.',
-          type: 'payment',
-          read: false,
-          link: '/dashboard',
-          createdAt: new Date(Date.now() - 1800000),
-        },
-        {
-          _id: `n_w3_${currentUserId}`,
-          title: 'Maximize Your Hiring Potential ⭐',
-          message: 'Express yourself in a professional manner: complete your bio, skills, and verification details to get verified badges and get hired faster.',
-          type: 'booking',
-          read: false,
-          link: '/dashboard',
-          createdAt: new Date(Date.now() - 3600000),
         },
       ];
     }
@@ -73,33 +38,15 @@ export default function NotificationCenter() {
     return [
       {
         _id: `n_c1_${currentUserId}`,
-        title: `Welcome to DailyHire, ${name}! 🌟`,
-        message: 'We are delighted to have you here. Discover top-rated, 100% ID-verified local service professionals ready to serve you with excellence and care.',
+        title: `Welcome to DailyHire, ${userName}! 🌟`,
+        message: 'Your account is active. Explore 100% ID-verified local daily-wage helpers and manage your service bookings.',
         type: 'system',
         read: false,
         link: '/explore',
         createdAt: new Date(),
       },
-      {
-        _id: `n_c2_${currentUserId}`,
-        title: 'Special Welcome Offer 🎁',
-        message: 'Enjoy up to 10% OFF on your first hiring! Book nearby plumbers, electricians, cleaners & mechanics with zero hidden fees.',
-        type: 'system',
-        read: false,
-        link: '/explore',
-        createdAt: new Date(Date.now() - 1800000),
-      },
-      {
-        _id: `n_c3_${currentUserId}`,
-        title: 'Your Peace of Mind & Safety 🛡️',
-        message: 'Every worker is 2-step government ID verified for your security. Experience transparent pricing and 30-minute doorstep service.',
-        type: 'booking',
-        read: false,
-        link: '/safety',
-        createdAt: new Date(Date.now() - 3600000),
-      },
     ];
-  }, [user, isHelper, currentUserId, name]);
+  }, [user, isHelper, currentUserId]);
 
   const applyLocalReadStatus = useCallback(
     (list) => {
@@ -125,12 +72,16 @@ export default function NotificationCenter() {
   );
 
   const fetchNotifications = useCallback(async () => {
+    if (!user) {
+      setNotifications([]);
+      return;
+    }
     try {
       const base = API_BASE.replace(/\/+$/, '');
       const res = await fetch(`${base}/api/notifications/${currentUserId}`);
       const data = await res.json();
       let rawList = [];
-      if (data.success && data.notifications?.length > 0) {
+      if (data.success && Array.isArray(data.notifications) && data.notifications.length > 0) {
         rawList = data.notifications;
       } else {
         rawList = getFallbackNotifications();
@@ -139,7 +90,7 @@ export default function NotificationCenter() {
     } catch (err) {
       setNotifications(applyLocalReadStatus(getFallbackNotifications()));
     }
-  }, [currentUserId, getFallbackNotifications, applyLocalReadStatus]);
+  }, [user, currentUserId, getFallbackNotifications, applyLocalReadStatus]);
 
   useEffect(() => {
     fetchNotifications();

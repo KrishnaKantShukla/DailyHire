@@ -34,12 +34,18 @@ export function HelperCard({ helper, index = 0 }) {
           <div className="flex items-start gap-4">
             {/* Avatar */}
             <div className="relative w-16 h-16 rounded-full overflow-hidden shrink-0 border border-border">
-              <Image
-                src={helper.image}
-                alt={helper.name}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform"
-              />
+              {helper.image && !helper.image.includes('unsplash') ? (
+                <Image
+                  src={helper.image}
+                  alt={helper.name || 'Helper'}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform"
+                />
+              ) : (
+                <div className="w-full h-full bg-slate-800 text-white font-extrabold flex items-center justify-center text-xl shadow-inner">
+                  {helper.name ? helper.name.trim()[0].toUpperCase() : 'H'}
+                </div>
+              )}
               {helper.available && (
                 <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-card rounded-full" />
               )}

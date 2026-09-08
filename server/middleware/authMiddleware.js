@@ -14,6 +14,21 @@ const authMiddleware = async (req, res, next) => {
     const decoded = jwt.verify(token, JWT_SECRET);
     const userId = decoded.userId;
 
+    if (decoded.role === 'admin' || userId === 'admin_1') {
+      req.user = {
+        id: 'admin_1',
+        _id: 'admin_1',
+        firstName: 'DailyHire',
+        lastName: 'Admin',
+        username: 'admin',
+        email: 'admin@dailyhire.com',
+        accountType: 'admin',
+        role: 'admin',
+        isAdmin: true,
+      };
+      return next();
+    }
+
     if (isConnected()) {
       let user = null;
       if (typeof userId === 'string' && userId.match(/^[0-9a-fA-F]{24}$/)) {

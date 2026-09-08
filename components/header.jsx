@@ -56,13 +56,19 @@ export function Header() {
     window.location.href = '/';
   };
 
-  const initials = user
-    ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase() || 'U'
+  const displayName = user
+    ? (user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user.name) || 'User'
     : '';
 
-  const displayName = user
-    ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'User'
+  const initials = user
+    ? (user.firstName ? `${user.firstName[0]}${user.lastName?.[0] || ''}` : displayName[0] || 'U').toUpperCase()
     : '';
+
+  const isAdmin =
+    user?.accountType === 'admin' ||
+    user?.role === 'admin' ||
+    user?.isAdmin ||
+    user?.email === 'admin@dailyhire.com';
 
 
   const navLinks = [
@@ -74,6 +80,8 @@ export function Header() {
     { href: '/about', label: 'About Us' },
     { href: '/contact', label: 'Contact Us' },
   ];
+
+
 
   return (
     <header
@@ -126,7 +134,14 @@ export function Header() {
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             {/* Desktop Quick Role Button */}
             <div className="hidden md:block">
-              {isHelper ? (
+              {isAdmin ? (
+                <Link href="/admin">
+                  <Button size="sm" variant="outline" className="text-xs font-semibold gap-1.5 border-amber-500 text-amber-500 hover:bg-amber-500/10">
+                    <LayoutDashboard className="w-3.5 h-3.5" />
+                    Admin Portal
+                  </Button>
+                </Link>
+              ) : isHelper ? (
                 <Link href="/dashboard">
                   <Button size="sm" variant="outline" className="text-xs font-semibold gap-1.5 border-primary text-primary hover:bg-primary/10">
                     <LayoutDashboard className="w-3.5 h-3.5" />
@@ -182,21 +197,25 @@ export function Header() {
                       <div className="px-4 py-3 bg-secondary/50 border-b border-border">
                         <p className="text-sm font-bold text-foreground truncate">{displayName}</p>
                         <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                        {user.accountType === 'helper' && user.profession && (
+                        {user.accountType === 'helper' && user.profession ? (
                           <span className="inline-block mt-1 text-[11px] bg-primary/10 text-primary rounded-full px-2 py-0.5 font-medium">
                             {user.profession}
                           </span>
-                        )}
+                        ) : isAdmin ? (
+                          <span className="inline-block mt-1 text-[11px] bg-amber-500/10 text-amber-500 rounded-full px-2 py-0.5 font-medium">
+                            Administrator
+                          </span>
+                        ) : null}
                       </div>
                       <div className="py-1 border-b border-border">
                         {/* 1. Dashboard */}
                         <Link
-                          href="/dashboard"
+                          href={isAdmin ? '/admin' : '/dashboard'}
                           onClick={() => setIsProfileOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-secondary transition-colors"
                         >
                           <LayoutDashboard className="w-4 h-4 text-primary" />
-                          <span>Dashboard</span>
+                          <span>{isAdmin ? 'Admin Portal' : 'Dashboard'}</span>
                         </Link>
                         {/* 2. My Orders / My Jobs */}
                         <Link

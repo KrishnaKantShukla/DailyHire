@@ -35,7 +35,9 @@ router.post('/checkout', async (req, res) => {
       savedPayment = await paymentDoc.save();
 
       // Update booking status to confirmed if found
-      await Booking.findByIdAndUpdate(bookingId, { status: 'confirmed' }).catch(() => {});
+      if (typeof bookingId === 'string' && bookingId.match(/^[0-9a-fA-F]{24}$/)) {
+        await Booking.findByIdAndUpdate(bookingId, { status: 'confirmed' }).catch(() => {});
+      }
 
       // Notify customer and helper
       await Notification.create({

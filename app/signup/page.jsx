@@ -20,7 +20,7 @@ import {
   CheckCircle2,
   FileCheck,
   Phone,
-  DollarSign,
+  IndianRupee,
   Play,
   Mail,
   X,
@@ -82,13 +82,14 @@ export default function SignupPage() {
   const [password, setPassword] = useState('');
   const [profession, setProfession] = useState('Cleaning & Housekeeping');
   const [experience, setExperience] = useState('1-3');
-  const [hourlyRate, setHourlyRate] = useState('450');
+  const [hourlyRate, setHourlyRate] = useState('80');
   const [bio, setBio] = useState('');
 
   // Step 2 Form state (Worker verification & payment details)
   const [govIdType, setGovIdType] = useState('aadhaar');
   const [govIdNumber, setGovIdNumber] = useState('');
   const [govIdDocName, setGovIdDocName] = useState('');
+  const [govIdProofUrl, setGovIdProofUrl] = useState('');
   const [bankName, setBankName] = useState('');
   const [accountHolderName, setAccountHolderName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
@@ -103,9 +104,52 @@ export default function SignupPage() {
 
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setGovIdDocName(file.name);
+    if (!file) return;
+
+    setGovIdDocName(file.name);
+    const reader = new FileReader();
+
+    if (file.type && file.type.startsWith('image/')) {
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const maxDim = 900;
+          let width = img.width;
+          let height = img.height;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+            setGovIdProofUrl(compressedDataUrl);
+          } else {
+            setGovIdProofUrl(event.target?.result || '');
+          }
+        };
+        img.onerror = () => {
+          setGovIdProofUrl(event.target?.result || '');
+        };
+        img.src = event.target?.result;
+      };
+    } else {
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setGovIdProofUrl(event.target.result);
+        }
+      };
     }
+    reader.readAsDataURL(file);
   };
 
   const handleStep1Submit = (e) => {
@@ -148,7 +192,7 @@ export default function SignupPage() {
         // Step 2 worker data
         govIdType,
         govIdNumber,
-        govIdProofUrl: govIdDocName ? `https://storage.dailyhire.local/docs/${govIdDocName}` : '',
+        govIdProofUrl: govIdProofUrl || (govIdDocName ? 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&h=400&fit=crop' : ''),
         bankName,
         accountHolderName: accountHolderName || `${firstName} ${lastName}`.trim(),
         accountNumber,
@@ -421,9 +465,9 @@ export default function SignupPage() {
               </div>
             )}
 
-            {/* Google Signup Option (Employer only) */}
+            {/* Google Signup Option - Hidden per configuration while retaining component implementation */}
             {step === 1 && accountType === 'customer' && (
-              <>
+              <div className="hidden">
                 <Button
                   type="button"
                   variant="outline"
@@ -459,7 +503,7 @@ export default function SignupPage() {
                     <span className="bg-background px-2 text-muted-foreground">Or fill details manually</span>
                   </div>
                 </div>
-              </>
+              </div>
             )}
 
             {/* Error banner */}
@@ -568,13 +612,13 @@ export default function SignupPage() {
                       {/* Hourly Rate */}
                       <div className="space-y-2">
                         <Label htmlFor="hourlyRate">
-                          <DollarSign className="inline w-3.5 h-3.5 mr-1 mb-0.5" />
+                          <IndianRupee className="inline w-3.5 h-3.5 mr-1 mb-0.5" />
                           Expected Hourly Rate (₹/hr)
                         </Label>
                         <Input
                           id="hourlyRate"
                           type="number"
-                          placeholder="450"
+                          placeholder="80"
                           value={hourlyRate}
                           onChange={(e) => setHourlyRate(e.target.value)}
                           required

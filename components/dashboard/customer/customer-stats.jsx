@@ -7,7 +7,11 @@ export function CustomerStats({ bookings }) {
   const totalBookings = bookings?.length || 0;
   const completedBookings = bookings?.filter((b) => b.status === 'completed')?.length || 0;
   const pendingBookings = bookings?.filter((b) => b.status === 'pending' || b.status === 'confirmed')?.length || 0;
-  const totalSpent = bookings?.reduce((acc, b) => acc + (b.price || 0), 0) || 0;
+  
+  // Calculate money spent strictly after confirmation or work completion
+  const totalSpent = bookings
+    ?.filter((b) => b.status === 'confirmed' || b.status === 'completed')
+    ?.reduce((acc, b) => acc + (b.price || 0), 0) || 0;
 
   const stats = [
     { label: 'Total Orders', count: totalBookings, icon: ShoppingBag, color: 'text-primary bg-primary/10' },

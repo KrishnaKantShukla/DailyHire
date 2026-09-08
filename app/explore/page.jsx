@@ -15,9 +15,9 @@ import { HelperCardSkeleton } from '@/components/ui/skeleton-loader';
 
 const priceRanges = [
   { id: 'all', label: 'All Prices' },
-  { id: 'low', label: 'Under ₹400/hr' },
-  { id: 'mid', label: '₹400-600/hr' },
-  { id: 'high', label: 'Over ₹600/hr' },
+  { id: 'low', label: 'Under ₹80/hr' },
+  { id: 'mid', label: '₹80 - ₹100/hr' },
+  { id: 'high', label: 'Over ₹100/hr' },
 ];
 
 const ratings = [
@@ -80,9 +80,9 @@ export default function ExplorePage() {
       return false;
     }
     if (selectedPrice !== 'all') {
-      if (selectedPrice === 'low' && helper.hourlyRate >= 400) return false;
-      if (selectedPrice === 'mid' && (helper.hourlyRate < 400 || helper.hourlyRate > 600)) return false;
-      if (selectedPrice === 'high' && helper.hourlyRate <= 600) return false;
+      if (selectedPrice === 'low' && helper.hourlyRate >= 80) return false;
+      if (selectedPrice === 'mid' && (helper.hourlyRate < 80 || helper.hourlyRate > 100)) return false;
+      if (selectedPrice === 'high' && helper.hourlyRate <= 100) return false;
     }
     return true;
   });

@@ -12,10 +12,10 @@ const EARNINGS_META = {
 
 export function HelperStats({ earnings }) {
   const stats = [
-    { key: 'today', total: earnings?.today || 245, change: '+12%' },
-    { key: 'week', total: earnings?.week || 1240, change: '+8%' },
-    { key: 'month', total: earnings?.month || 4850, change: '+5%' },
-    { key: 'pending', total: earnings?.pending || 180, change: 'Scheduled' },
+    { key: 'today', total: earnings?.today ?? 0, change: earnings?.today > 0 ? '+100%' : '0%' },
+    { key: 'week', total: earnings?.week ?? 0, change: earnings?.week > 0 ? '+100%' : '0%' },
+    { key: 'month', total: earnings?.month ?? 0, change: earnings?.month > 0 ? '+100%' : '0%' },
+    { key: 'pending', total: earnings?.pending ?? 0, change: 'Scheduled' },
   ];
 
   return (

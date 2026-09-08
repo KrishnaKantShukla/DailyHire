@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from 'react'
-import { CheckCircle2, CreditCard, QrCode, Wallet, DollarSign, X, ShieldCheck, Loader2, ArrowRight, Download } from 'lucide-react'
+import { CheckCircle2, CreditCard, QrCode, Wallet, IndianRupee, X, ShieldCheck, Loader2, ArrowRight, Download } from 'lucide-react'
 
 export default function PaymentModal({ isOpen, onClose, booking, onPaymentSuccess }) {
   const [method, setMethod] = useState('upi')
@@ -77,7 +77,7 @@ export default function PaymentModal({ isOpen, onClose, booking, onPaymentSucces
                   { id: 'upi', label: 'UPI / GPay', icon: QrCode },
                   { id: 'card', label: 'Credit / Debit', icon: CreditCard },
                   { id: 'netbanking', label: 'Net Banking', icon: Wallet },
-                  { id: 'cod', label: 'Cash after Service', icon: DollarSign },
+                  { id: 'cod', label: 'Cash after Service', icon: IndianRupee },
                 ].map((item) => {
                   const Icon = item.icon
                   const active = method === item.id

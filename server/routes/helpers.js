@@ -6,20 +6,28 @@ const router = express.Router();
 // ─── GET /api/helpers ────────────────────────────────────────────────────────
 router.get('/', async (req, res) => {
   try {
-    const { category, search, available, minRating, maxPrice } = req.query;
+    const { category, search, available, minRating, maxPrice, all } = req.query;
 
     if (isConnected()) {
       let query = {};
+
+      // Only show verified helpers on public explore page unless 'all=true'
+      if (all !== 'true') {
+        query.verified = true;
+        query.verificationStatus = 'verified';
+      }
+
       if (category && category !== 'all') {
         query.profession = new RegExp(`^${category}$`, 'i');
       }
 
       if (search) {
+        const searchRegex = new RegExp(search, 'i');
         query.$or = [
-          { name: new RegExp(search, 'i') },
-          { profession: new RegExp(search, 'i') },
-          { bio: new RegExp(search, 'i') },
-          { skills: { $in: [new RegExp(search, 'i')] } },
+          { name: searchRegex },
+          { profession: searchRegex },
+          { bio: searchRegex },
+          { skills: { $in: [searchRegex] } },
         ];
       }
 
@@ -42,6 +50,7 @@ router.get('/', async (req, res) => {
         hourlyRate: h.hourlyRate,
         available: h.available,
         verified: h.verified,
+        verificationStatus: h.verificationStatus || (h.verified ? 'verified' : 'pending'),
         bio: h.bio,
         skills: h.skills,
         completedJobs: h.completedJobs,
@@ -51,8 +60,13 @@ router.get('/', async (req, res) => {
       return res.json(formattedHelpers);
     }
 
-    // Memory store fallback filtering
+    // Memory store fallback filtering: Only show active verified helpers unless all=true
     let results = [...memoryStore.helpers];
+    if (all !== 'true') {
+      results = results.filter(
+        (h) => h.verified === true && (h.verificationStatus === 'verified' || !h.verificationStatus) && h.verificationStatus !== 'rejected' && h.verificationStatus !== 'unverified'
+      );
+    }
     if (category && category !== 'all') {
       results = results.filter((h) => h.profession.toLowerCase() === category.toLowerCase());
     }
@@ -75,12 +89,20 @@ router.get('/', async (req, res) => {
       results = results.filter((h) => h.hourlyRate <= Number(maxPrice));
     }
 
-    res.json(results);
+    return res.json(results);
+
   } catch (error) {
     console.error('Error fetching helpers:', error.message);
-    res.json(memoryStore.helpers);
+    let fallback = [...memoryStore.helpers];
+    if (req.query.all !== 'true') {
+      fallback = fallback.filter(
+        (h) => h.verified === true && (h.verificationStatus === 'verified' || !h.verificationStatus) && h.verificationStatus !== 'rejected' && h.verificationStatus !== 'unverified'
+      );
+    }
+    return res.json(fallback);
   }
 });
+
 
 // ─── GET /api/helpers/:id ───────────────────────────────────────────────────
 router.get('/:id', async (req, res) => {
@@ -88,10 +110,11 @@ router.get('/:id', async (req, res) => {
     const { id } = req.params;
 
     if (isConnected()) {
-      let helper = await Helper.findOne({ customId: id });
-      if (!helper && id.match(/^[0-9a-fA-F]{24}$/)) {
-        helper = await Helper.findById(id);
+      const helperOrConditions = [{ customId: id }, { userId: id }];
+      if (typeof id === 'string' && id.match(/^[0-9a-fA-F]{24}$/)) {
+        helperOrConditions.push({ _id: id });
       }
+      const helper = await Helper.findOne({ $or: helperOrConditions });
 
       if (helper) {
         return res.json({
@@ -123,8 +146,14 @@ router.get('/:id', async (req, res) => {
     res.json(helper);
   } catch (error) {
     console.error('Error fetching helper detail:', error.message);
-    res.status(500).json({ message: 'Failed to fetch helper details.' });
+    const { id } = req.params;
+    const fallbackHelper = memoryStore.helpers.find((h) => h.customId === id || h.id === id || h._id === id);
+    if (fallbackHelper) {
+      return res.json(fallbackHelper);
+    }
+    return res.status(404).json({ message: 'Helper not found.' });
   }
 });
+
 
 module.exports = router;

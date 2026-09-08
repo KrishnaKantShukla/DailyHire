@@ -24,13 +24,16 @@ export function HelperJobRequests({ requests, onRequestAction, onSelectRequest }
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5">
-              <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-secondary">
-                <Image
-                  src={req.customerImage || 'https://images.unsplash.com/photo-1599566150163-29194dcabd36?w=100&h=100&fit=crop&crop=face'}
-                  alt={req.customerName}
-                  fill
-                  className="object-cover"
-                />
+              <div className="w-12 h-12 rounded-full bg-slate-900 dark:bg-slate-950 text-white font-extrabold text-lg flex items-center justify-center border-2 border-slate-700 shrink-0 shadow-xs">
+                {req.customerImage && !req.customerImage.includes('unsplash') ? (
+                  <img
+                    src={req.customerImage}
+                    alt={req.customerName}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <span>{req.customerName ? req.customerName.trim()[0].toUpperCase() : 'C'}</span>
+                )}
               </div>
               <div>
                 <div className="flex items-center gap-2">

@@ -5,135 +5,17 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/dailyh
 // ─── Initial Memory Fallback Seed ────────────────────────────────────────────
 
 const memoryStore = {
-  helpers: [
-    {
-      customId: '1',
-      _id: '1',
-      name: 'Rahul Sharma',
-      profession: 'Plumber',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
-      rating: 4.9,
-      reviewCount: 127,
-      distance: '0.8 km',
-      priceRange: '₹400-600/hr',
-      hourlyRate: 450,
-      available: true,
-      verified: true,
-      bio: 'Licensed master plumber with 12 years of experience. Specializing in emergency repairs, pipe installations, and bathroom renovations.',
-      skills: ['Pipe Repair', 'Water Heater', 'Drain Cleaning', 'Bathroom Installation'],
-      completedJobs: 342,
-      location: { lat: 28.6139, lng: 77.209 },
-    },
-    {
-      customId: '2',
-      _id: '2',
-      name: 'Priya Patel',
-      profession: 'Electrician',
-      image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face',
-      rating: 4.8,
-      reviewCount: 89,
-      distance: '1.2 km',
-      priceRange: '₹500-800/hr',
-      hourlyRate: 550,
-      available: true,
-      verified: true,
-      bio: 'Certified electrician specializing in residential and commercial electrical work. Safety is my top priority.',
-      skills: ['Wiring', 'Panel Upgrades', 'Lighting', 'Troubleshooting'],
-      completedJobs: 256,
-      location: { lat: 28.6159, lng: 77.207 },
-    },
-    {
-      customId: '3',
-      _id: '3',
-      name: 'Amit Kumar',
-      profession: 'Carpenter',
-      image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face',
-      rating: 4.7,
-      reviewCount: 64,
-      distance: '1.5 km',
-      priceRange: '₹350-550/hr',
-      hourlyRate: 400,
-      available: false,
-      verified: true,
-      bio: 'Skilled carpenter with expertise in custom furniture, cabinetry, and home renovations.',
-      skills: ['Custom Furniture', 'Cabinetry', 'Deck Building', 'Repairs'],
-      completedJobs: 189,
-      location: { lat: 28.6119, lng: 77.211 },
-    },
-    {
-      customId: '4',
-      _id: '4',
-      name: 'Sneha Gupta',
-      profession: 'Cleaner',
-      image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face',
-      rating: 5.0,
-      reviewCount: 203,
-      distance: '0.5 km',
-      priceRange: '₹250-400/hr',
-      hourlyRate: 300,
-      available: true,
-      verified: true,
-      bio: 'Professional cleaner providing deep cleaning, move-in/out cleaning, and regular maintenance services.',
-      skills: ['Deep Cleaning', 'Move-in/out', 'Office Cleaning', 'Sanitization'],
-      completedJobs: 512,
-      location: { lat: 28.6149, lng: 77.208 },
-    },
-    {
-      customId: '5',
-      _id: '5',
-      name: 'Vikram Singh',
-      profession: 'Mechanic',
-      image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=face',
-      rating: 4.6,
-      reviewCount: 78,
-      distance: '2.1 km',
-      priceRange: '₹450-700/hr',
-      hourlyRate: 500,
-      available: true,
-      verified: false,
-      bio: 'ASE certified mechanic offering on-site repairs and maintenance for all vehicle makes and models.',
-      skills: ['Engine Repair', 'Brake Service', 'Oil Change', 'Diagnostics'],
-      completedJobs: 167,
-      location: { lat: 28.6169, lng: 77.205 },
-    },
-    {
-      customId: '6',
-      _id: '6',
-      name: 'Anjali Desai',
-      profession: 'AC Repair',
-      image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop&crop=face',
-      rating: 4.9,
-      reviewCount: 112,
-      distance: '1.8 km',
-      priceRange: '₹550-850/hr',
-      hourlyRate: 600,
-      available: true,
-      verified: true,
-      bio: 'HVAC specialist with expertise in AC installation, repair, and maintenance for residential and commercial units.',
-      skills: ['AC Installation', 'Repair', 'Maintenance', 'Duct Cleaning'],
-      completedJobs: 298,
-      location: { lat: 28.6129, lng: 77.206 },
-    },
-  ],
+  helpers: [],
+
   services: [
-    { customId: '1', _id: '1', name: 'Basic Inspection', description: 'Quick inspection and diagnosis', basePrice: 300, duration: '30 min' },
-    { customId: '2', _id: '2', name: 'Standard Repair', description: 'Common repairs and fixes', basePrice: 750, duration: '1-2 hrs' },
-    { customId: '3', _id: '3', name: 'Full Service', description: 'Complete service package', basePrice: 1500, duration: '2-4 hrs' },
-    { customId: '4', _id: '4', name: 'Emergency Service', description: '24/7 emergency assistance', basePrice: 1000, duration: 'ASAP' },
+    { customId: '1', _id: '1', name: 'Basic Inspection', description: 'Quick inspection and diagnosis', basePrice: 120, duration: '30 min' },
+    { customId: '2', _id: '2', name: 'Standard Repair', description: 'Common repairs and fixes', basePrice: 250, duration: '1-2 hrs' },
+    { customId: '3', _id: '3', name: 'Full Service', description: 'Complete service package', basePrice: 450, duration: '2-4 hrs' },
+    { customId: '4', _id: '4', name: 'Emergency Service', description: '24/7 emergency assistance', basePrice: 350, duration: 'ASAP' },
   ],
   users: [],
   bookings: [],
-  reviews: [
-    {
-      _id: 'r1',
-      helperId: '1',
-      userName: 'Aman D.',
-      userImage: 'https://images.unsplash.com/photo-1599566150163-29194dcabd36?w=100&h=100&fit=crop&crop=face',
-      rating: 5,
-      comment: 'Excellent work! Fixed my leaky faucet in no time. Very professional and clean.',
-      date: '2 days ago',
-    },
-  ],
+  reviews: [],
 };
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
@@ -163,7 +45,7 @@ const UserSchema = new mongoose.Schema(
     accountNumber: { type: String, default: '' },
     ifscCode: { type: String, default: '' },
     upiId: { type: String, default: '' },
-    verificationStatus: { type: String, enum: ['unverified', 'pending', 'verified'], default: 'unverified' },
+    verificationStatus: { type: String, enum: ['unverified', 'pending', 'verified', 'rejected'], default: 'unverified' },
   },
   { timestamps: true }
 );
@@ -178,8 +60,8 @@ const HelperSchema = new mongoose.Schema(
     rating: { type: Number, default: 4.8 },
     reviewCount: { type: Number, default: 0 },
     distance: { type: String, default: '1.0 km' },
-    priceRange: { type: String, default: '₹400-600/hr' },
-    hourlyRate: { type: Number, default: 450 },
+    priceRange: { type: String, default: '₹80-120/hr' },
+    hourlyRate: { type: Number, default: 80 },
     available: { type: Boolean, default: true },
     verified: { type: Boolean, default: true },
     bio: { type: String, default: '' },
@@ -198,7 +80,7 @@ const HelperSchema = new mongoose.Schema(
     accountNumber: { type: String, default: '' },
     ifscCode: { type: String, default: '' },
     upiId: { type: String, default: '' },
-    verificationStatus: { type: String, enum: ['unverified', 'pending', 'verified'], default: 'pending' },
+    verificationStatus: { type: String, enum: ['unverified', 'pending', 'verified', 'rejected'], default: 'pending' },
   },
   { timestamps: true }
 );
@@ -301,25 +183,11 @@ let isMongoConnected = false;
 
 const seedInitialData = async () => {
   try {
-    const helperCount = await Helper.countDocuments();
-    if (helperCount === 0) {
-      console.log('Seeding initial helpers dataset into MongoDB...');
-      const helpersToSeed = memoryStore.helpers.map(({ _id, ...rest }) => rest);
-      await Helper.insertMany(helpersToSeed);
-    }
-
     const serviceCount = await Service.countDocuments();
-    if (serviceCount === 0) {
+    if (serviceCount === 0 && memoryStore.services.length > 0) {
       console.log('Seeding initial services dataset into MongoDB...');
       const servicesToSeed = memoryStore.services.map(({ _id, ...rest }) => rest);
       await Service.insertMany(servicesToSeed);
-    }
-
-    const reviewCount = await Review.countDocuments();
-    if (reviewCount === 0) {
-      console.log('Seeding initial reviews dataset into MongoDB...');
-      const reviewsToSeed = memoryStore.reviews.map(({ _id, ...rest }) => rest);
-      await Review.insertMany(reviewsToSeed);
     }
   } catch (error) {
     console.error('Error seeding initial MongoDB data:', error.message);
@@ -336,8 +204,9 @@ const connectDB = async () => {
 
     console.log(`MongoDB Connected successfully to ${MONGODB_URI}`);
 
-    // Automatic seeding disabled for production.
-    // await seedInitialData();
+    // Automatic seeding of initial helpers & services dataset into MongoDB
+    await seedInitialData();
+
 
   } catch (error) {
     isMongoConnected = false;

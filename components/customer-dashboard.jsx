@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { fetchBookings } from '@/lib/api';
+import { fetchBookings, updateBookingStatus } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { CustomerStats } from '@/components/dashboard/customer/customer-stats';
@@ -12,45 +12,6 @@ import ChatModal from '@/components/chat-modal';
 import QuickBookingModal from '@/components/quick-booking-modal';
 import { DashboardStatSkeleton } from '@/components/ui/skeleton-loader';
 import { Search } from 'lucide-react';
-
-const MOCK_BOOKINGS = [
-  {
-    id: 'b1',
-    helperId: '1',
-    helperName: 'Rahul Sharma',
-    helperImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
-    serviceName: 'Pipe Repair',
-    price: 450,
-    date: 'Today',
-    time: '2:30 PM',
-    status: 'confirmed',
-    notes: 'Kitchen sink pipe is leaking water. Please bring sealant.',
-  },
-  {
-    id: 'b2',
-    helperId: '2',
-    helperName: 'Priya Patel',
-    helperImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face',
-    serviceName: 'Wiring Check',
-    price: 550,
-    date: 'Tomorrow',
-    time: '10:00 AM',
-    status: 'pending',
-    notes: 'Need inspection of living room switches flickering.',
-  },
-  {
-    id: 'b3',
-    helperId: '4',
-    helperName: 'Sneha Gupta',
-    helperImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face',
-    serviceName: 'Deep Cleaning',
-    price: 900,
-    date: '15 May 2026',
-    time: '9:00 AM',
-    status: 'completed',
-    notes: 'Living room and balcony deep cleaning.',
-  },
-];
 
 export function CustomerDashboard() {
   const { user } = useAuth();
@@ -64,17 +25,23 @@ export function CustomerDashboard() {
 
   useEffect(() => {
     async function loadBookings() {
+      if (!user) {
+        setBookings([]);
+        setLoading(false);
+        return;
+      }
       try {
-        const userId = user?.id || user?._id;
+        const userId = user.id || user._id;
         const data = await fetchBookings({ customerId: userId });
-        if (data && data.length > 0) {
-          setBookings(data);
+        if (Array.isArray(data)) {
+          // Filter out cancelled bookings so customer dashboard is clean
+          setBookings(data.filter((b) => b.status !== 'cancelled'));
         } else {
-          setBookings(MOCK_BOOKINGS);
+          setBookings([]);
         }
       } catch (err) {
-        console.error('Failed to load live bookings:', err);
-        setBookings(MOCK_BOOKINGS);
+        console.error('Failed to load customer live bookings:', err);
+        setBookings([]);
       } finally {
         setLoading(false);
       }
@@ -82,13 +49,24 @@ export function CustomerDashboard() {
     loadBookings();
   }, [user]);
 
-  const handleStatusUpdate = (id, newStatus) => {
-    setBookings((prev) =>
-      prev.map((b) => ((b._id || b.id) === id ? { ...b, status: newStatus } : b))
-    );
+  const handleStatusUpdate = async (id, newStatus) => {
+    if (newStatus === 'cancelled') {
+      try {
+        await updateBookingStatus(id, 'cancelled');
+      } catch (e) {
+        console.error('Failed to cancel booking on server:', e);
+      }
+      // Delete / remove cancelled booking from customer dashboard
+      setBookings((prev) => prev.filter((b) => (b._id || b.id) !== id));
+    } else {
+      setBookings((prev) =>
+        prev.map((b) => ((b._id || b.id) === id ? { ...b, status: newStatus } : b))
+      );
+    }
   };
 
   const filteredBookings = bookings.filter((b) => {
+    if (b.status === 'cancelled') return false;
     if (activeTab === 'active') return b.status === 'pending' || b.status === 'confirmed';
     if (activeTab === 'completed') return b.status === 'completed';
     return true;
@@ -98,16 +76,27 @@ export function CustomerDashboard() {
     <div className="space-y-8">
       {/* Header Banner */}
       <div className="bg-card rounded-3xl border border-border p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-        <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-accent bg-accent/10 px-3 py-1 rounded-full">
-            Customer Dashboard
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground mt-2">
-            Welcome back, {displayName}! 👋
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Manage your service bookings, track helpers in real-time, and get quick help.
-          </p>
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 rounded-full bg-slate-900 dark:bg-slate-950 text-white font-extrabold text-2xl flex items-center justify-center border-2 border-slate-700 shrink-0 shadow-md">
+            {user?.image && !user.image.includes('unsplash') ? (
+              <img src={user.image} alt={displayName} className="w-full h-full rounded-full object-cover" />
+            ) : user?.avatar && !user.avatar.includes('unsplash') ? (
+              <img src={user.avatar} alt={displayName} className="w-full h-full rounded-full object-cover" />
+            ) : (
+              <span>{user?.firstName?.[0]?.toUpperCase() || user?.name?.[0]?.toUpperCase() || 'C'}</span>
+            )}
+          </div>
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-accent bg-accent/10 px-3 py-1 rounded-full">
+              Customer Dashboard
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground mt-1.5">
+              Welcome back, {displayName}! 👋
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Manage your service bookings, track helpers in real-time, and get quick help.
+            </p>
+          </div>
         </div>
 
         <Link href="/explore">

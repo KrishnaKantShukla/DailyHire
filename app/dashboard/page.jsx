@@ -13,11 +13,19 @@ export default function DashboardPage() {
   const { user, isHelper, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
+  const isAdminUser =
+    user?.accountType === 'admin' ||
+    user?.role === 'admin' ||
+    user?.isAdmin ||
+    user?.email === 'admin@dailyhire.com';
+
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/login');
+    } else if (!isLoading && isAuthenticated && isAdminUser) {
+      router.push('/admin');
     }
-  }, [isLoading, isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, isAdminUser, router]);
 
   if (isLoading || (!user && isAuthenticated)) {
     return (
@@ -30,6 +38,10 @@ export default function DashboardPage() {
         <Footer />
       </div>
     );
+  }
+
+  if (isAdminUser) {
+    return null;
   }
 
   return (

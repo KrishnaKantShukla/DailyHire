@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { MapPin, ArrowRight, Mail } from 'lucide-react';
+import { MapPin, ArrowRight, Mail, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -37,8 +37,17 @@ export default function LoginPage() {
     try {
       const data = await loginUser({ email, password });
       login(data.user, data.token);
-      toast.success(`Logged in successfully! Welcome back.`);
-      router.push(data.user.role === 'helper' || data.user.accountType === 'helper' ? '/dashboard' : '/explore');
+
+      if (data.user.role === 'admin' || data.user.accountType === 'admin' || data.user.isAdmin) {
+        toast.success(`Welcome, Administrator! Accessing Central Admin Panel.`);
+        router.push('/admin');
+      } else if (data.user.role === 'helper' || data.user.accountType === 'helper') {
+        toast.success(`Logged in successfully! Welcome back.`);
+        router.push('/dashboard');
+      } else {
+        toast.success(`Logged in successfully! Welcome back.`);
+        router.push('/explore');
+      }
     } catch (err) {
       setError(err.message || 'Login failed.');
       toast.error(err.message || 'Login failed.');
@@ -46,6 +55,11 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+
+  const handleAdminClick = () => {
+    router.push('/admin/login');
+  };
+
 
 
   return (
@@ -158,7 +172,8 @@ export default function LoginPage() {
               <p className="text-muted-foreground mt-2">Enter your email and password to access your account.</p>
             </div>
 
-            <div className="grid gap-4">
+            {/* Google Login Option - Hidden per admin configuration while retaining component implementation */}
+            <div className="hidden">
               <Button
                 type="button"
                 variant="outline"
@@ -185,16 +200,16 @@ export default function LoginPage() {
                 </svg>
                 Continue with Google
               </Button>
-            </div>
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with
-                </span>
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    Or continue with
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -250,6 +265,17 @@ export default function LoginPage() {
                 Sign up
               </Link>
             </p>
+
+            <div className="pt-2 border-t border-border/60 text-center">
+              <button
+                type="button"
+                onClick={handleAdminClick}
+                className="text-xs font-semibold text-amber-500 hover:text-amber-400 hover:underline flex items-center justify-center gap-1.5 mx-auto py-1"
+              >
+                Administrator Sign In
+              </button>
+            </div>
+
           </motion.div>
         </div>
       </div>
@@ -259,6 +285,24 @@ export default function LoginPage() {
         onClose={() => setIsGoogleModalOpen(false)}
         onSuccess={handleGoogleSuccess}
       />
+
+      {/* ─── FIXED BOTTOM RIGHT ADMIN LOGIN BUTTON (Secured Navigation to Admin Login Gateway) ─── */}
+      <div className="fixed bottom-6 right-6 z-40">
+        <button
+          type="button"
+          onClick={handleAdminClick}
+          className="flex items-center gap-3 px-4 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-2xl border-2 border-slate-300 dark:border-slate-700 shadow-2xl hover:scale-105 transition-all group"
+          title="Go to Secure Admin Login Portal"
+        >
+          <div className="p-1.5 rounded-xl bg-amber-500/20 text-amber-400 group-hover:scale-110 transition-transform border border-amber-500/30">
+            <ShieldCheck className="w-4 h-4" />
+          </div>
+          <div className="text-left">
+            <div className="font-extrabold text-white text-xs tracking-tight">Admin Portal</div>
+            <div className="text-[10px] text-slate-400 font-medium">Secured Authentication</div>
+          </div>
+        </button>
+      </div>
     </div>
   );
 }
